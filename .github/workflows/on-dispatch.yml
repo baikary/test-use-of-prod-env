@@ -1,0 +1,40 @@
+name: Respond to Baikary dispatch
+
+on:
+  repository_dispatch:
+    types:
+      - baikary-customize
+
+permissions:
+  contents: write
+
+jobs:
+  customize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Show payload
+        run: |
+          echo "Full name: ${{ github.event.client_payload.fullName }}"
+          echo "Site type: ${{ github.event.client_payload.siteType }}"
+
+      - name: Create environment file
+        run: |
+          echo "NEXT_PUBLIC_FULL_NAME=${{ github.event.client_payload.fullName }}" > .env.production
+          echo "NEXT_PUBLIC_SITE_TYPE=${{ github.event.client_payload.siteType }}" >> .env.production
+          cat .env.production
+
+      - name: Commit changes
+        run: |
+          git config --global user.name "baikary-bot"
+          git config --global user.email "bot@baikary.com"
+          git status
+          git add .env.production
+          git status
+          git commit -m "Customize Baikary with environment variables"
+          git push --force-with-lease origin main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
